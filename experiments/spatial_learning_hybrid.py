@@ -12,7 +12,6 @@ from spatial_representations.topology_graphs.four_connected_graph_rotation impor
 from observations.image_observations import ImageObservationBaseline
 from interfaces.oai_gym_interface import OAIGymInterface
 from analysis.rl_monitoring.rl_performance_monitors import RLPerformanceMonitorBaseline
-import matplotlib.pyplot as plt
 
 # set some python environment properties
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # reduces the amount of debug messages from tensorflow.
@@ -23,7 +22,7 @@ config.gpu_options.allow_growth = True  # dynamically grow the memory used on th
 sess = tf.compat.v1.Session(config=config)
 backend.set_session(sess)
 
-visualOutput = False
+visualOutput = True
 max_steps = 600
 test_steps = 100
 
