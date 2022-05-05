@@ -10,6 +10,7 @@ The folder "Experiments" contain the scripts for running the simulations, and th
 
 ### Installing
 
+* Install *Python==3.6*
 * Install and configure *tensorflow-gpu==2.2.0*
 * Install other dependent packages: **pip install -r requirements.txt**
 * Add an extra python path: **export PYTHONPATH=/your_directory/EM_Spatial_Learning**
