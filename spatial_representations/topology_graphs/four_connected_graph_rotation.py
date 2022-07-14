@@ -20,7 +20,6 @@ import random
 class Four_Connected_Graph_Rotation(SpatialRepresentation):
 
     def __init__(self, modules, graph_info, step_size=1.0):
-
         # call the base class init
         super(Four_Connected_Graph_Rotation,self).__init__()
 
@@ -71,12 +70,6 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
         # here each node is a XY coordinate and each edge is a list containing 2 integers, indicating a connectivity
         # between 2 nodes
         nodes, edges = self.generate_topology_from_worldInfo(step_size)
-
-        # store the nodes and edges of the env
-        # topo_info = {'nodes': nodes, 'edges': edges, 'walls': self.wall_limits}
-        # path = '/home/joshua/phd_projects/em_rl/data/%s_Top.pickle' % self.scenarioName
-        # with open(path, 'wb') as handle:
-        #     pickle.dump(topo_info, handle)
 
         # transfer the node points into the self.nodes list
         indexCounter=0
@@ -129,6 +122,9 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
 
 
     def set_visual_debugging(self,visual_output,graphicsWindow):
+        '''
+        Initilize the topology monitor on the graphics window
+        '''
         self.graphicsWindow=graphicsWindow
         self.visual_output=visual_output
         if visual_output:
@@ -140,8 +136,10 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
         pass
 
     def initVisualElements(self):
+        '''
         # do basic visualization
         # iff visualOutput is set to True!
+        '''
         if self.visual_output:
 
             # add the graph plot to the GUI widget
@@ -195,15 +193,22 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
             # initial position to center, this has to be worked over later!
             self.posMarker.setData(0.0,0.0,90.0)
 
-    # This function updates the visual depiction of the agent(robot).
-    #
-    # pose: the agent's pose to visualize
+
     def updateRobotPose(self, pose):
+        '''
+        # This function updates the visual depiction of the agent(robot).
+        # pose: the agent's pose to visualize
+        '''
         if self.visual_output:
             self.posMarker.setData(pose[0],pose[1],np.rad2deg(np.arctan2(pose[3],pose[2])))
 
-
     def reset_start_nodes(self, startNodes, ori):
+        '''
+        Reset the nodes where the agent start
+        Parameters:
+            startNodes:              | a list of node index
+            ori:                     | an orientation among [0, 90, -90, -180] degrees
+        '''
         self.startOri = None
         for node in self.nodes:
             node.startNode=False
@@ -216,7 +221,10 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
 
     def generate_topology_from_worldInfo(self, step_size=1.0):
         '''
-        step_size: the minimal distance between nodes
+        This function generate a four-connected graph based on the coordinates of the walls,
+        The results are a list of node and edges that connect the node.
+        Pamameters:
+            step_size: the minimal distance between nodes
         '''
         # for each wall limit, create the correponding four edges, since each wall is a square on 2D plane
         wall_edges = []
@@ -322,6 +330,10 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
         return angle
 
     def generate_behavior_from_action(self, action):
+        '''
+        Apply an action to the agent, update the topological position of the agent
+        as well as its actual coordinates in the simulation environment.
+        '''
         # the world module is required here
         world_module=self.modules['world']
         nextNodePos=np.array([0.0,0.0])
@@ -538,9 +550,14 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
 
 
     def get_action_space(self):
-        # for this spatial representation type, there are three possible actions: forward, left, right
+        '''
+        For this spatial representation type, there are six possible actions: forward, left, right, backward, left
+        rotation and right rotation
+        '''
         return gym.spaces.Discrete(6)
 
     def clear_trajectories(self):
-        # clear the trajectory history if needed
+        '''
+        Clear the trajectory history if needed
+        '''
         self.trajectories = []

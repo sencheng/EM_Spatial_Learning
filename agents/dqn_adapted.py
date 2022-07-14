@@ -18,9 +18,11 @@ class DQNAgentAdapted(DQNAgent):
     ### The nested visualization class that is required by 'KERAS-RL' to visualize the training success (by means of episode reward)
     ### at the end of each episode, and update the policy visualization.
     class callbacks(callbacks.Callback):
+        '''
         # rlParent:     the ACT_ReinforcementLearningModule that hosts this class
         # trialBeginFcn:the callback function called in the beginning of each trial, defined for more flexibility in scenario control
         # trialEndFcn:  the callback function called at the end of each trial, defined for more flexibility in scenario control
+        '''
         def __init__(self, rlParent, trialBeginFcn=None, trialEndFcn=None):
 
             super(DQNAgentAdapted.callbacks, self).__init__()
@@ -40,7 +42,6 @@ class DQNAgentAdapted(DQNAgent):
         # The following function is called whenever an epsisode starts,
         # and updates the visual output in the plotted reward graphs.
         def on_episode_begin(self, epoch, logs):
-
             # retrieve the Open AI Gym interface
             interfaceOAI = self.rlParent.interfaceOAI
 
@@ -57,7 +58,6 @@ class DQNAgentAdapted(DQNAgent):
 
     def __init__(self, interfaceOAI, memoryCapacity=10000, epsilon=0.1, gamma=0.9, memory_type='sequential', total_steps=1000, n=5, allow_replay=True, lr=0.0001,
                  trialBeginFcn=None, trialEndFcn=None, enable_CNN=True, use_random_projections=False, batch_size=32, train_interval=1):
-
 
         # store the Open AI Gym interface
         self.interfaceOAI = interfaceOAI
@@ -91,34 +91,6 @@ class DQNAgentAdapted(DQNAgent):
             )
             self.custom_model_objects = {}
         else :
-            # load the pre-trained vqvae
-            # weights_path = '/home/joshua/phd_projects/em_rl/saved_models/vqvae_model.h5'
-            # INPUT_SHAPE = (84, 84, 3)
-            # NUM_LATENT_K = 150                 # Number of codebook entries
-            # NUM_LATENT_D = 2                 # Dimension of each codebook entries
-            # VQVAE_LAYERS = [32, 16]          # Number of filters for each layer in the encoder
-            # vqvae = VQ_VAE(NUM_LATENT_K, NUM_LATENT_D, input_shape=INPUT_SHAPE, num_layers=VQVAE_LAYERS)
-            # vqvae.compile()
-            # vqvae.load_model(weights_path)
-            # # use the encoder of vqvae as the sensory model whose output is the index map of the image inputs
-            # codebook_index = vqvae.encoder.output / NUM_LATENT_K
-            # # or directly use the outputs of the encoder
-            # sample_code = vqvae.vq_vae.get_layer('z_e').output
-            # self.sensory_model = Model(inputs=vqvae.encoder.input, outputs=sample_code)
-            # self.sensory_model.trainable = False
-            # x = self.sensory_model.output
-            # #x = Convolution2D(32, kernel_size=(4, 4), strides=3, activation='relu')(x)
-            # x = Flatten()(x)
-            # x = Reshape((1, x.shape[1]))(x)
-            # x = Dense(256, activation='relu')(x)
-            # x = SimpleRNN(128, activation='relu')(x)
-            # x = Dense(self.nb_actions, activation='linear')(x)
-            #
-            # self.model = Model(inputs=self.sensory_model.input, outputs=x)
-            # self.model.summary()
-            # # if there is customized layer, you have to put it here for model cloning
-            # self.custom_model_objects = {'VectorQuantizer': VectorQuantizer}
-            ##############################################################################
             # We use the same CNN that was described by Mnih et al. (2015)
             self.sensory_model=Sequential()
             self.sensory_model.add(Convolution2D(16, kernel_size=(8,8), strides=4, activation='relu', input_shape=self.observation_space.shape))
@@ -145,20 +117,23 @@ class DQNAgentAdapted(DQNAgent):
 
         # define the available policies
         policyEpsGreedy = EpsGreedyQPolicy(epsilon)
-        # policy = LinearAnnealedPolicy(EpsGreedyQPolicy(), attr='eps', value_max=1.0, value_min=.1, value_test=.05,
-        #                       nb_steps=int(total_steps*0.6))
-
         # construct the DQN agent
         super(DQNAgentAdapted, self).__init__(model=self.model, nb_actions=self.nb_actions, memory=self.memory, with_replay=allow_replay, nb_steps_warmup=batch_size,
                                         enable_dueling_network=True, target_model_update=0.01, gamma=gamma, delta_clip=1., train_interval=train_interval,
                                         enable_double_dqn=True, policy=policyEpsGreedy, batch_size=batch_size, custom_model_objects=self.custom_model_objects)
-
         self.engagedCallbacks = self.callbacks(self, trialBeginFcn, trialEndFcn)
 
         # compile the agent
         self.compile(Adam(lr=lr), metrics=['mse'])
 
     def forward(self, observation):
+        '''
+        This function takes the image as input, compute the Q values of the input,
+        and select an action based on the values.
+        Parameters:
+            Observation:             an RGB image or a 1-D vector
+        Return: an action represented by a integer
+        '''
         if self.use_random_projections:
             # compress the observation with random projection
             observation=[self.process_observation(observation)]
@@ -176,6 +151,9 @@ class DQNAgentAdapted(DQNAgent):
         self.recent_action = action
 
     def change_replay(self, with_replay):
+        '''
+        Whether or not to use memory replay
+        '''
         self.with_replay = with_replay
 
     def process_observation(self, observation):
@@ -193,26 +171,38 @@ class DQNAgentAdapted(DQNAgent):
         observation=np.dot(flattened_observation, self.random_projections)
         return observation
 
-    ### The following function is called to train the agent.
-    def train(self, total_episodes, max_episode_steps=1000):
 
+    def train(self, total_episodes, max_episode_steps=1000):
+        '''
+        The function is called to train the agent.
+        '''
         # call the fit method to start the RL learning process
         self.fit(self.interfaceOAI, nb_episodes=total_episodes, verbose=2, callbacks=[self.engagedCallbacks],
                  nb_max_episode_steps=max_episode_steps, visualize=False)
 
 
     def predict(self, total_episodes, max_episode_steps=1000):
-        # compile the agent
+        '''
+            The function is called to test the agent's performance without
+            training it.
+        '''
         history_data=self.test(self.interfaceOAI, nb_episodes=total_episodes, callbacks=[self.engagedCallbacks],
                   visualize=False, nb_max_episode_steps=max_episode_steps, verbose=2)
         return history_data
 
     def save_model(self, weights_path, projection_path=None):
+        '''
+        Save the weights of the NN and the projection matrix, if random projection is
+        used to pre-process the inputs
+        '''
         self.model.save_weights(weights_path)
         if projection_path:
             pickle.dump(self.random_projections, open(projection_path, 'wb'))
 
-    def load_model(self, weights_path, projection_path=None):  # load the weights of nn and random projection values
+    def load_model(self, weights_path, projection_path=None):
+        '''
+        # load the weights of nn and random projection values, if the latter were used
+        '''
         self.model.load_weights(weights_path)
         if projection_path:
             self.init_projection = True
@@ -223,27 +213,24 @@ class DQNAgentAdapted(DQNAgent):
         return self.model.predict(observation)[0]
 
     def sleep_phase(self, num_update):
+        '''
         # perform offline replay after the training session
+        '''
         for _ in range(num_update):
             metrics = self.replay()
 
-    def freeze_hidden_layers(self):
-        # freeze the first few layers
-        for layer in self.model.layers[0:-3]:
-            layer.trainable = False
-        # re-initilize the rest of the layers
-        for layer in self.model.layers[-3:]:
-            self.reinit_layer(layer)
-
-    def unlock_hidden_layers(self):
-        for layer in self.model.layers[0:-3]:
-            layer.trainable = True
-
     def reinit_layer(self, layer):
+        '''
+        This function takes in any NN layer, call its initilizer and reset
+        the weights.
+        '''
         session = backend.get_session()
         if hasattr(layer, 'kernel_initializer'):
             layer.kernel.initializer.run(session=session)
 
     def reset_model(self):
+        '''
+        This function reset the weights of all layers
+        '''
         for layer in self.model.layers:
             self.reinit_layer(layer)

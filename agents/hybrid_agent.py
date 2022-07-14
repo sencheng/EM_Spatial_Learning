@@ -9,14 +9,12 @@ from agents.dqn_adapted import DQNAgentAdapted
 from agents.em_control import EM_control
 
 
-'''
-This agent is a hybrid agent between DQN and Episodic control agent for simulating the learning
-paradigm of a healthy rat's brain.
-'''
 
 class HybridAgent(Agent):
-    ### The nested visualization class that is required by 'KERAS-RL' to visualize the training success (by means of episode reward)
-    ### at the end of each episode, and update the policy visualization.
+    '''
+    This agent is a hybrid agent between DQN and Episodic control agent for simulating the learning
+    paradigm of a healthy rat's brain.
+    '''
     class callbacks(callbacks.Callback):
         # rlParent:     the ACT_ReinforcementLearningModule that hosts this class
         # trialBeginFcn:the callback function called in the beginning of each trial, defined for more flexibility in scenario control
@@ -85,6 +83,12 @@ class HybridAgent(Agent):
         self.episode_selection = []
 
     def forward(self, observation):
+        '''
+        This function takes an image or 1-D vector as input and compute the
+        Q values from both the DQN and Episodic control, combining them into
+        one integrated Q values. In the end, output an action based on the
+        hybrid Q values.
+        '''
         # Syncroize the self.step parameter of the hybrid agent with the two sub-agents
         self.episodic_agent.step = self.step
         self.semantic_agent.step = self.step
@@ -123,6 +127,9 @@ class HybridAgent(Agent):
         return action
 
     def backward(self, reward, terminal):
+        '''
+        Update both the DQN and episodic controller
+        '''
         self.episodic_agent.backward(reward, terminal)
         metrics = self.semantic_agent.backward(reward, terminal)
         if terminal:
@@ -130,8 +137,14 @@ class HybridAgent(Agent):
             self.episode_selection = []
         return metrics
 
-    ### The following function is called to train the agent.
+
     def train(self, total_episodes, max_episode_steps=1000):
+        '''
+        Train the agent.
+        Parameters:
+            total_episodes            | the total number of training episodes
+            max_episode_steps         | the maximum allowed number of steps per episode
+        '''
         # activate the self.training parameter in the two sub-agents
         self.episodic_agent.training = True
         self.semantic_agent.training = True
@@ -141,6 +154,9 @@ class HybridAgent(Agent):
         return history
 
     def predict(self, total_episodes, max_episode_steps=1000):
+        '''
+        Test the agent's performace without training it.
+        '''
         # deactivate the self.training parameter in the two sub-agents
         self.episodic_agent.training = False
         self.semantic_agent.training = False

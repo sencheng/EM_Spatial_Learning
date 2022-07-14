@@ -18,12 +18,15 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # reduces the amount of debug messages
 backend.set_image_data_format(data_format='channels_last')
 
 class DQNAgentBaseline(DQNAgent):
-    ### The nested visualization class that is required by 'KERAS-RL' to visualize the training success (by means of episode reward)
-    ### at the end of each episode, and update the policy visualization.
+    '''
+    This class implements a DQN agent based on the DQN from Keras-RL
+    '''
     class callbacks(callbacks.Callback):
+        '''
         # rlParent:     the ACT_ReinforcementLearningModule that hosts this class
         # trialBeginFcn:the callback function called in the beginning of each trial, defined for more flexibility in scenario control
         # trialEndFcn:  the callback function called at the end of each trial, defined for more flexibility in scenario control
+        '''
         def __init__(self, rlParent, trialBeginFcn=None, trialEndFcn=None):
 
             super(DQNAgentBaseline.callbacks, self).__init__()
@@ -81,7 +84,6 @@ class DQNAgentBaseline(DQNAgent):
 
         self.memory_type = memory_type
 
-        ###### let the agent discover itself which model (FF, CNN, cross_modality) it should use #############
         if not enable_CNN:
             # we use random projection to reduce data dimension
             self.model = Sequential(
@@ -95,34 +97,6 @@ class DQNAgentBaseline(DQNAgent):
             )
             self.custom_model_objects = {}
         else :
-            # load the pre-trained vqvae
-            # weights_path = '/home/joshua/phd_projects/em_rl/saved_models/vqvae_model.h5'
-            # INPUT_SHAPE = (84, 84, 3)
-            # NUM_LATENT_K = 150                 # Number of codebook entries
-            # NUM_LATENT_D = 2                 # Dimension of each codebook entries
-            # VQVAE_LAYERS = [32, 16]          # Number of filters for each layer in the encoder
-            # vqvae = VQ_VAE(NUM_LATENT_K, NUM_LATENT_D, input_shape=INPUT_SHAPE, num_layers=VQVAE_LAYERS)
-            # vqvae.compile()
-            # vqvae.load_model(weights_path)
-            # # use the encoder of vqvae as the sensory model whose output is the index map of the image inputs
-            # codebook_index = vqvae.encoder.output / NUM_LATENT_K
-            # # or directly use the outputs of the encoder
-            # sample_code = vqvae.vq_vae.get_layer('z_e').output
-            # self.sensory_model = Model(inputs=vqvae.encoder.input, outputs=sample_code)
-            # self.sensory_model.trainable = False
-            # x = self.sensory_model.output
-            # #x = Convolution2D(32, kernel_size=(4, 4), strides=3, activation='relu')(x)
-            # x = Flatten()(x)
-            # x = Reshape((1, x.shape[1]))(x)
-            # x = Dense(256, activation='relu')(x)
-            # x = SimpleRNN(128, activation='relu')(x)
-            # x = Dense(self.nb_actions, activation='linear')(x)
-            #
-            # self.model = Model(inputs=self.sensory_model.input, outputs=x)
-            # self.model.summary()
-            # # if there is customized layer, you have to put it here for model cloning
-            # self.custom_model_objects = {'VectorQuantizer': VectorQuantizer}
-            ##############################################################################
             # We use the same CNN that was described by Mnih et al. (2015)
             self.sensory_model=Sequential()
             self.sensory_model.add(Convolution2D(16, kernel_size=(8,8), strides=4, activation='relu', input_shape=self.observation_space.shape))
@@ -152,8 +126,6 @@ class DQNAgentBaseline(DQNAgent):
 
         # define the available policies
         policyEpsGreedy = EpsGreedyQPolicy(epsilon)
-        # policy = LinearAnnealedPolicy(EpsGreedyQPolicy(), attr='eps', value_max=1.0, value_min=.1, value_test=.05,
-        #                       nb_steps=int(total_steps*0.6))
 
         # construct the DQN agent
         super(DQNAgentBaseline, self).__init__(model=self.model, nb_actions=self.nb_actions, memory=self.memory, nb_steps_warmup=nb_steps_warmup,
@@ -163,6 +135,13 @@ class DQNAgentBaseline(DQNAgent):
         self.engagedCallbacks = self.callbacks(self, trialBeginFcn, trialEndFcn)
 
     def forward(self, observation):
+        '''
+        This function takes the image as input, compute the Q values of the input,
+        and select an action based on the values.
+        Parameters:
+            Observation:             an RGB image or a 1-D vector
+        Return: an action represented by a integer
+        '''
         if self.use_random_projections:
             # compress the observation with random projection
             observation=self.process_observation(observation)
@@ -188,8 +167,11 @@ class DQNAgentBaseline(DQNAgent):
         observation=np.dot(flattened_observation, self.random_projections)
         return observation
 
-    ### The following function is called to train the agent.
+
     def train(self, total_episodes, max_episode_steps=1000, lr=0.0001):
+        '''
+        The following function is called to train the agent.
+        '''
         # compile the agent
         self.compile(Adam(lr=lr), metrics=['mse'])
         # call the fit method to start the RL learning process
@@ -198,17 +180,25 @@ class DQNAgentBaseline(DQNAgent):
         self.test_actions = []
 
     def predict(self, total_episodes, max_episode_steps=1000):
-        # compile the agent
+        '''
+        The following function is called to test the agent.
+        '''
         history_data=self.test(self.interfaceOAI, nb_episodes=total_episodes, callbacks=[self.engagedCallbacks],
                   visualize=False, nb_max_episode_steps=max_episode_steps, verbose=2)
         return history_data
 
     def save_model(self, weights_path, projection_path=None):
+        '''
+        # load the weights of nn and random projection values, if the latter were used
+        '''
         self.model.save_weights(weights_path)
         if projection_path:
             pickle.dump(self.random_projections, open(projection_path, 'wb'))
 
-    def load_model(self, weights_path, projection_path=None):  # load the weights of nn and random projection values
+    def load_model(self, weights_path, projection_path=None):
+        '''
+        # load the weights of nn and random projection values
+        '''
         self.model.load_weights(weights_path)
         if projection_path:
             self.init_projection = True
@@ -217,25 +207,11 @@ class DQNAgentBaseline(DQNAgent):
     def compute_q_value(self, observation):
         return self.model.predict(observation)[0]
 
-    def sleep_phase(self, num_update):
-        # perform offline replay after the training session
-        for _ in range(num_update):
-            metrics = self.replay()
-            print(metrics)
-
-    def freeze_hidden_layers(self):
-        # freeze the first few layers
-        for layer in self.model.layers[0:-3]:
-            layer.trainable = False
-        # re-initilize the rest of the layers
-        for layer in self.model.layers[-3:]:
-            self.reinit_layer(layer)
-
-    def unlock_hidden_layers(self):
-        for layer in self.model.layers[0:-3]:
-            layer.trainable = True
-
     def reinit_layer(self, layer):
+        '''
+        This function takes in any NN layer, call its initilizer and reset
+        the weights.
+        '''
         session = backend.get_session()
         if hasattr(layer, 'kernel_initializer'):
             layer.kernel.initializer.run(session=session)

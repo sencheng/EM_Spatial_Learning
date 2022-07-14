@@ -15,6 +15,9 @@ def mean_q(y_true, y_pred):
 
 class DQNAgent(AbstractDQNAgent):
     """
+    This DQN is modified based on the original one from Keras-RL. The key difference is that the agent
+    now is not only trained with memory replay, but also with the current online experience, which means
+    there are two network updates at each time step.
     """
     def __init__(self, model, policy=None, test_policy=None, enable_double_dqn=False, enable_dueling_network=False, with_replay=True,
                  dueling_type='avg', *args, **kwargs):
@@ -55,7 +58,7 @@ class DQNAgent(AbstractDQNAgent):
         self.policy = policy
         self.test_policy = test_policy
 
-        # State.
+        # Reset state.
         self.reset_states()
 
         # the model always has a online buffer for online learning
@@ -87,7 +90,6 @@ class DQNAgent(AbstractDQNAgent):
 
     def compile(self, optimizer, metrics=[]):
         metrics += [mean_q]  # register default metrics
-
         # We never train the target model, hence we can set the optimizer and loss arbitrarily.
         self.target_model = clone_model(self.model, self.custom_model_objects)
         self.target_model.compile(optimizer='sgd', loss='mse')
@@ -127,6 +129,9 @@ class DQNAgent(AbstractDQNAgent):
         self.compiled = True
 
     def load_weights(self, filepath):
+        '''
+        Load stored weights. Set the target model's weights as the same.
+        '''
         self.model.load_weights(filepath)
         self.update_target_model_hard()
 
@@ -134,6 +139,9 @@ class DQNAgent(AbstractDQNAgent):
         self.model.save_weights(filepath, overwrite=overwrite)
 
     def reset_states(self):
+        '''
+        Reset the model
+        '''
         self.recent_action = None
         self.recent_observation = None
         if self.compiled:
@@ -144,6 +152,13 @@ class DQNAgent(AbstractDQNAgent):
         self.target_model.set_weights(self.model.get_weights())
 
     def forward(self, observation):
+        '''
+        This function takes the image as input, compute the Q values of the input,
+        and select an action based on the values.
+        Parameters:
+            Observation:             an RGB image or a 1-D vector
+        Return: an action represented by a integer
+        '''
         # Select an action.
         state = self.memory.get_recent_state(observation)
         q_values = self.compute_q_values(state)
@@ -157,17 +172,18 @@ class DQNAgent(AbstractDQNAgent):
         self.recent_action = action
         return action
 
-
     def backward(self, reward, terminal):
         # Store most recent experience in memory.
         if self.step % self.memory_interval == 0:
+            # store the experience into the normal memory buffer
             self.memory.append(self.recent_observation, self.recent_action, reward, terminal,
                                training=self.training)
+            # store the experience into the online buffer which only stores the most
+            # recent experience tuple.
             self.ol_memory.append(self.recent_observation, self.recent_action, reward, terminal,
                                training=self.training)
 
         metrics = [np.nan for _ in self.metrics_names]
-
 
         if not self.training:
             # We're done here. No need to update the experience memory since we only use the working
@@ -176,7 +192,7 @@ class DQNAgent(AbstractDQNAgent):
 
         # perform online learning at each step
         ol_experiences = self.ol_memory.sample()
-        metrics = self.update_Qnet(ol_experiences, batch_size=1)
+        metrics = self.update_Qnet(ol_experiences)
 
         # perform experience replay for once if replay learning is activated
         if self.with_replay:
@@ -205,12 +221,16 @@ class DQNAgent(AbstractDQNAgent):
         if len(experiences) == 0:
             return [np.nan for _ in self.metrics_names]
 
-        metrics = self.update_Qnet(experiences, self.batch_size)
+        metrics = self.update_Qnet(experiences)
 
         return metrics
 
 
-    def update_Qnet(self, experiences, batch_size):
+    def update_Qnet(self, experiences):
+        '''
+        This function takes in a batch of experiences of any size, and update the
+        network with the usual DQN update method.
+        '''
         # Start by extracting the necessary parameters (we use a vectorized implementation).
         state0_batch = []
         state1_batch = []
@@ -218,9 +238,9 @@ class DQNAgent(AbstractDQNAgent):
         action_batch = []
         terminal1_batch = []
         importance_weights = []
+        batch_size = len(experiences)
         # We will be updating the idxs of the priority trees with new priorities
         pr_idxs = []
-
         if self.memory_type=='prioritized':
             for e in experiences[:-2]: # Prioritized Replay returns Experience tuple + weights and idxs.
                 state0_batch.extend(e.state0)
@@ -241,10 +261,8 @@ class DQNAgent(AbstractDQNAgent):
         if state1_batch[0] is None or state0_batch[0] is None: # at the first step of online learning in each episode, the next state has not been observed so none,
             return [np.nan for _ in self.metrics_names]               # then we skip the backward step
 
-
         state0_batch = self.process_state_batch(state0_batch)
         state1_batch = self.process_state_batch(state1_batch)
-
         terminal1_batch = np.array(terminal1_batch)
         reward_batch = np.array(reward_batch)
         assert reward_batch.shape == (batch_size,)

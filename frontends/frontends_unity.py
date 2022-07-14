@@ -26,9 +26,10 @@ def get_env_path():
 ### The Unity interface class. This class connects to the Unity environment and controls the flow of commands/data that goes to/comes from the Blender environment.
 ###
 class FrontendUnityInterface():
-
-    ### Constructor
-    ### scenarioName: the name of the scenario that should be processed
+    '''
+    This class build the connection between Python and any pre-built unity environment
+    scenarioName: the name of the scenario that should be processed
+    '''
     def __init__(self, scenarioName=None, side_channels=None, seed=42, timeout_wait=60, time_scale=3.0, worker_id=0, step_size=1.0):
 
         self.env_exec_path = None
@@ -51,7 +52,6 @@ class FrontendUnityInterface():
         # step parameters
         self.env_configuration_channel = FloatPropertiesChannel()
         self.env_configuration_channel.set_property("max_step", 100000)
-
 
         # add env config channel
         side_channels.append(self.env_configuration_channel)
@@ -130,29 +130,24 @@ class FrontendUnityInterface():
         # initial robot pose of [X, Z, Yaw]; it is Z coordinate here because the agent is moving on the XZ plane
         self.robotPose=np.array([0.0,0.0,0.0])
 
-    ### This function supplies the interface with a valid topology module
-    ###
-    ### topologyModule: the topologyModule to be supplied
+
     def setTopology(self,topologyModule):
+        '''
+         This function supplies the interface with a valid topology module
+         topologyModule: the topologyModule to be supplied
+        '''
         self.topologyModule=topologyModule
 
-    # This function propels the simulation. It uses physics to guide the agent/robot with linear and angular velocities.
-    #
-    # velocityLinear:       the requested linear (translational) velocity of the agent/robot
-    # omega:                the requested rotational (angular) velocity of the agent/robot
-    #
-    # Note: linear and angular velocities can be set simultaneously to force the robot to go in curved paths
     def stepSimulation(self,velocityLinear,omega):
         pass
 
-
-    # This function propels the simulation. It uses teleportation to guide the agent/robot directly by means of global x,y,yaw values.
-    #
-    # x:       the global x position to teleport to
-    # y:       the global y position to teleport to
-    # yaw:     the global yaw value to teleport to
-    #
     def step_simulation_without_physics(self,newX,newZ,newYaw):
+        '''
+        This function propels the simulation. It uses teleportation to guide the agent/robot directly by means of global x,y,yaw values.
+        newX:       the global x position to teleport to
+        newZ:       the global z position to teleport to
+        yaw:     the global yaw value to teleport to
+        '''
         # send teleported positions to Unity and retrieve the observation
         # step the env with the provided action.
         # the orientation of the coordinate sys in Unity and here is different such that the sum of two is phase 90 degree
@@ -190,14 +185,13 @@ class FrontendUnityInterface():
         return imageData, poseData
 
 
-    # This function actually actuates the agent/robot in the virtual environment.
-    #
-    # actuatorCommand:  the command that is used in the actuation process
-    #
     def actuateRobot(self,actuatorCommand):
+        '''
+        This function actually actuates the agent/robot in the virtual environment.
+        actuatorCommand:  the command that is used in the actuation process
+        '''
         # if the actuator command has more than 2 array entries, this is a teleport command, and will cause a teleport jump of the agent/robot (no physics support)
         if actuatorCommand.shape[0]>2:
-
             # call the teleportation routine
             [imageData, poseData]=self.step_simulation_without_physics(actuatorCommand[0],actuatorCommand[1],actuatorCommand[2])
 
@@ -211,26 +205,34 @@ class FrontendUnityInterface():
             # return the data acquired from the robot/agent/environment
             return imageData, poseData
 
-
-    # This function teleports the robot to a novel pose.
-    #
-    # pose:     the pose to teleport to, format: [X,Z,Yaw]
     def setXYYaw(self, pose):
+        '''
+        This function teleports the robot to a novel pose.
+        pose:     the pose to teleport to, format: [X,Z,Yaw]
+        '''
         action = ActionTuple(pose)
         self.env.set_actions(self.behavior_name, action)
         # forward the simulation by a tick (and execute action)
         self.env.step()
 
-    # This function returns the limits of the environmental perimeter.
+
     def getLimits(self):
+        '''
+        This function returns the limits of the environmental perimeter.
+        '''
         # rearrange the elements for topology module to use
         world_limits = [[self.world_limits[0], self.world_limits[2]], [self.world_limits[1], self.world_limits[3]]]
         return np.asarray(world_limits)
 
-    # This function returns the environmental perimeter by means of wall vertices/segments.
+
     def getWallGraph(self):
+        '''
+        This function returns the environmental perimeter by means of wall vertices/segments.
+        '''
         return self.walls_limits, self.perimeter_nodes
 
-    # This function shuts down Unity.
     def stopUnity(self):
+        '''
+        This function shuts down Unity.
+        '''
         self.env.close()

@@ -28,7 +28,9 @@ class Env_sidechannel(SideChannel):
         self.received_info.append(msg.read_string())
 
     def send_string(self, data: str) -> None:
-        # Add the string to an OutgoingMessage
+        '''
+        Add the string to an OutgoingMessage
+        '''
         msg = OutgoingMessage()
         msg.write_string(data)
         # We call this method to queue the data we want to send

@@ -8,7 +8,6 @@ import random
 import time
 from decimal import *
 
-
 class Q_ec:
     '''
     This is the Q_ec table from the paper. There are three kinds of elements in this class: states, q_values and the most
@@ -17,6 +16,10 @@ class Q_ec:
                 constantly reconstructed.
         Q_values: implemented as a normal list
         last_visited_times: implemented as a normal list
+    Parameters:
+        max_size:            | the maximum size of any buffer
+        nb_actions:          | the numer of actions
+        decay_rate:          | how much the learned Q values decay over time
     '''
     def __init__(self, max_size, nb_action, decay_rate):
         self.states=[]
@@ -30,7 +33,7 @@ class Q_ec:
     def get_length(self):
         return len(self.states)
 
-    def estimate(self, state, k): # estimate Q values by using a kd-tree
+    def estimate(self, state, k):
         '''
         Estimate all the Q values of the current state with k nearst neighbors
         '''
@@ -57,6 +60,9 @@ class Q_ec:
             return np.zeros(self.nb_action)
 
     def update(self, episode):
+        '''
+        Update the Q_EC table with the experiences from an episode
+        '''
         for event in episode:
             state=event['state']
             action=event['action']
@@ -66,7 +72,9 @@ class Q_ec:
 
 
     def add_event(self, state, action, accmu_reward, visited_time):
-        # add event by using a kd-tree
+        '''
+        Add event by using a kd-tree
+        '''
         if self.states_tree:
             nearst_idx=self.states_tree.query(X=[state], return_distance=False)[0][0]
             # print(np.linalg.norm(state-self.states[nearst_idx]))
@@ -104,15 +112,14 @@ class Q_ec:
 
 
 class EM_control(Agent):
-    ### The nested visualization class that is required by 'KERAS-RL' to visualize the training success (by means of episode reward)
-    ### at the end of each episode, and update the policy visualization.
     class callbacks(callbacks.Callback):
-
+        '''
         # The constructor.
         #
         # rlParent:     the ACT_ReinforcementLearningModule that hosts this class
         # trialBeginFcn:the callback function called in the beginning of each trial, defined for more flexibility in scenario control
         # trialEndFcn:  the callback function called at the end of each trial, defined for more flexibility in scenario control
+        '''
         def __init__(self, rlParent, trialBeginFcn=None, trialEndFcn=None):
 
             super(EM_control.callbacks, self).__init__()
@@ -129,24 +136,27 @@ class EM_control(Agent):
             # store the logs data
             self.logs_data=[]
 
-        # The following function is called whenever an epsisode starts,
-        # and updates the visual output in the plotted reward graphs.
-        def on_episode_begin(self, epoch, logs):
 
+        def on_episode_begin(self, epoch, logs):
+            '''
+            # The following function is called whenever an epsisode starts,
+            # and updates the visual output in the plotted reward graphs.
+            '''
             # retrieve the Open AI Gym interface
             interfaceOAI = self.rlParent.interfaceOAI
 
             if self.trialBeginFcn is not None:
                 self.trialBeginFcn(epoch, self.rlParent)
 
-        # The following function is called whenever an episode ends, and updates the reward accumulator,
-        # simultaneously updating the visualization of the reward function
         def on_episode_end(self, epoch, logs):
+            '''
+            # The following function is called whenever an episode ends, and updates the reward accumulator,
+            # simultaneously updating the visualization of the reward function
+            '''
             # store the log data
             self.logs_data.append(logs)
             if self.trialEndFcn is not None:
                 self.trialEndFcn(epoch, self.rlParent, logs)
-
 
     def __init__(self, interfaceOAI, memoryCapacity=2000, k=3, gamma=0.9, epsilon=0.1, processor=None, decay_rate=0.0,
                  use_random_projections=True, pretrained_model=None, trialBeginFcn=None, trialEndFcn=None):
@@ -250,6 +260,11 @@ class EM_control(Agent):
         return metrics
 
     def accmu_reward(self, episode):
+        '''
+        This function takes in an episode of experience and calculate the
+        accumulative reward for each state action pair, then insert the results
+        back to the episode disctonary.
+        '''
         episode_length = len(episode)
         for i in range(episode_length):
             accumulative=0.0
@@ -289,17 +304,21 @@ class EM_control(Agent):
         return processed_observation
 
     def compute_q_value(self, observation):
+        '''
+        Compute the q values of the input
+        '''
         processed_state = self.process_observation(observation)
         # extract the Q values for this state from EM
         q_value=self.episodic_memory.estimate(processed_state, self.k)
         return q_value
 
-    ### The following function is called to train the agent.
     def train(self, total_episodes, max_episode_steps=1000, lr=0.00015):
+        '''
+        The following function is called to train the agent.
+        '''
         # call the fit method to start the RL learning process
         self.fit(self.interfaceOAI, nb_episodes=total_episodes, verbose=2, callbacks=[self.engagedCallbacks],
                        nb_max_episode_steps=max_episode_steps, visualize=False)
-      
 
     def predict(self, total_episodes, max_episode_steps=1000):
         history_data=self.test(self.interfaceOAI, nb_episodes=total_episodes, callbacks=[self.engagedCallbacks],
