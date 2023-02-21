@@ -1,10 +1,10 @@
-# The functional role of episodic memory in spatial learning
+# Modeling the function of episodic memory in spatial learning
 
-The code is for recreating the simulations and figures described in the paper **The functional role of episodic memory in spatial learning (Zeng, X., Wiskott, L., Cheng, S., 2022)**
+The code is for recreating the simulations and figures described in the paper **Modeling the function of episodic memory in spatial learning (Zeng, X., Diekmann, N., Wiskott, L., Cheng, S., 2023)**
 
 ## Description
 
-The folder "Experiments" contain the scripts for running the simulations, and the folder "data" contains the scripts for plotting the figures as well as the stored data from the simulations. All other files function as supporting codes.
+The folder "experiments" contain the scripts for running the simulations and for plotting the figures as well as the stored data from the simulations. All other files function as supporting codes.
 
 ## Getting Started
 
@@ -17,8 +17,8 @@ The folder "Experiments" contain the scripts for running the simulations, and th
 
 ### Executing program
 
-* Excute **EM_Spatial_Learning/experiments/spatial_learning_individual.py** and **EM_Spatial_Learning/experiments/spatial_learning_hybird.py** for the simulations
-* After the simulations are done, excute **EM_Spatial_Learning/data/spatial_plots_individual.py** and **EM_Spatial_Learning/data/spatial_plots_hybrid.py** to create the figures.
+* Excute **EM_Spatial_Learning/experiments/learning_compare/learning_compare.py**, **EM_Spatial_Learning/experiments/sequential_replay/sequential_replay_1.py** and **EM_Spatial_Learning/experiments/sequential_replay/sequential_replay_2.py** for the simulations
+* After the simulations are done, excute **EM_Spatial_Learning/experiments/learning_compare/learning_compare_plots.py**, **EM_Spatial_Learning/experiments/sequential_replay/sequential_replay_plots.py**  and **EM_Spatial_Learning/experiments/sequential_replay/replay_analysis.py** to create the figures.
 
 
 ## Authors

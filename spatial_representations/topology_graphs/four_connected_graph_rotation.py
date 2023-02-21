@@ -1,25 +1,27 @@
+# basic imports
 import PyQt5 as qt
 import pyqtgraph as pg
-import pyqtgraph.functions
 import numpy as np
 import gym
+import gym.spaces 
 import pickle
 import matplotlib.pyplot as plt
-from .misc.topology_node import TopologyNode
-from .misc.cog_arrow import CogArrow
-from .misc.utils import lineseg_dists, point_in_polygon
 from math import atan2
 from numpy.linalg import norm
 from math import *
-from spatial_representations.spatial_representation import SpatialRepresentation
-
 import time
 import random
+# framework imports
+from .misc.topology_node import TopologyNode
+from .misc.cog_arrow import CogArrow
+from .misc.utils import lineseg_dists, point_in_polygon
+from cobel.spatial_representations.spatial_representation import SpatialRepresentation
 
 
 class Four_Connected_Graph_Rotation(SpatialRepresentation):
 
     def __init__(self, modules, graph_info, step_size=1.0):
+
         # call the base class init
         super(Four_Connected_Graph_Rotation,self).__init__()
 
@@ -35,7 +37,7 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
 
         # the world module is required here
         world_module=modules['world']
-        self.scenarioName = world_module.scenarioName
+        #self.scenarioName = world_module.scenarioName
         self.offline = world_module.offline
 
         # get the limits of the given environment
@@ -69,18 +71,18 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
         # read topology structure from world module
         # here each node is a XY coordinate and each edge is a list containing 2 integers, indicating a connectivity
         # between 2 nodes
-        nodes, edges = self.generate_topology_from_worldInfo(step_size)
+        self.primitive_nodes, self.primitive_edges = self.generate_topology_from_worldInfo(step_size)
 
         # transfer the node points into the self.nodes list
         indexCounter=0
-        for n in nodes:
+        for n in self.primitive_nodes:
             # create the corresponding node, where i is the running index of the mesh_points/corresponding nodes
             node=TopologyNode(indexCounter,float(n[0]),float(n[1]))
             self.nodes=self.nodes+[node]
             indexCounter+=1
 
         # fill in the self.edges list from the edges information
-        for e in edges:
+        for e in self.primitive_edges:
             self.edges=self.edges+[[int(e[0]),int(e[1])]]
 
         # define a dedicated 'noneNode' that acts as a placeholder for neighborhood construction
@@ -122,9 +124,6 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
 
 
     def set_visual_debugging(self,visual_output,graphicsWindow):
-        '''
-        Initilize the topology monitor on the graphics window
-        '''
         self.graphicsWindow=graphicsWindow
         self.visual_output=visual_output
         if visual_output:
@@ -136,10 +135,8 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
         pass
 
     def initVisualElements(self):
-        '''
         # do basic visualization
         # iff visualOutput is set to True!
-        '''
         if self.visual_output:
 
             # add the graph plot to the GUI widget
@@ -193,22 +190,15 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
             # initial position to center, this has to be worked over later!
             self.posMarker.setData(0.0,0.0,90.0)
 
-
+    # This function updates the visual depiction of the agent(robot).
+    #
+    # pose: the agent's pose to visualize
     def updateRobotPose(self, pose):
-        '''
-        # This function updates the visual depiction of the agent(robot).
-        # pose: the agent's pose to visualize
-        '''
         if self.visual_output:
             self.posMarker.setData(pose[0],pose[1],np.rad2deg(np.arctan2(pose[3],pose[2])))
 
+
     def reset_start_nodes(self, startNodes, ori):
-        '''
-        Reset the nodes where the agent start
-        Parameters:
-            startNodes:              | a list of node index
-            ori:                     | an orientation among [0, 90, -90, -180] degrees
-        '''
         self.startOri = None
         for node in self.nodes:
             node.startNode=False
@@ -221,10 +211,7 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
 
     def generate_topology_from_worldInfo(self, step_size=1.0):
         '''
-        This function generate a four-connected graph based on the coordinates of the walls,
-        The results are a list of node and edges that connect the node.
-        Pamameters:
-            step_size: the minimal distance between nodes
+        step_size: the minimal distance between nodes
         '''
         # for each wall limit, create the correponding four edges, since each wall is a square on 2D plane
         wall_edges = []
@@ -240,9 +227,13 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
 
         wall_edges = np.asarray(wall_edges)
 
-        # generate 2d grid based on the world limits
-        x = np.arange(self.world_limits[0, 0]+step_size, self.world_limits[0, 1], step_size)
-        y = np.arange(self.world_limits[1, 0]+step_size, self.world_limits[1, 1], step_size)
+        # generate 2d grid based on a square defined by the world nodes (minx, miny) and (maxx, maxy)
+        minx = ceil(min(self.world_nodes[:, 0]))
+        miny = ceil(min(self.world_nodes[:, 1]))
+        maxx = floor(max(self.world_nodes[:, 0]))
+        maxy = floor(max(self.world_nodes[:, 1]))
+        x = np.arange(minx, maxx+step_size, step_size)
+        y = np.arange(miny, maxy+step_size, step_size)
         xv, yv = np.meshgrid(x, y, sparse=False, indexing='xy')
 
         # store each nodes which is not too close to the wall
@@ -255,7 +246,7 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
             for yi in yv[:,0]:
                 distances = lineseg_dists(np.array([xi, yi]), wall_edges[:, 0], wall_edges[:, 1])
                 # if there is a node too close to any of the wall, its index is None
-                distances = distances < (step_size/2)
+                distances = distances < 0.3
                 if distances.nonzero()[0].size > 0:
                     nodes_index.append(None)
                 else:
@@ -330,15 +321,10 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
         return angle
 
     def generate_behavior_from_action(self, action):
-        '''
-        Apply an action to the agent, update the topological position of the agent
-        as well as its actual coordinates in the simulation environment.
-        '''
         # the world module is required here
         world_module=self.modules['world']
         nextNodePos=np.array([0.0,0.0])
         callback_value=dict()
-        callback_value['goalNodes'] = self.graph_info['goalNodes']
         # if a standard action is performed, NOT a reset
         if action!='reset':
             # get current heading
@@ -548,16 +534,16 @@ class Four_Connected_Graph_Rotation(SpatialRepresentation):
         # not currently used
         pass
 
+    def store_topology(self, data_path):
+        # store the nodes and edges of the env
+        topo_info = {'nodes': self.primitive_nodes, 'edges': self.primitive_edges, 'walls': self.wall_limits}
+        with open(data_path, 'wb') as handle:
+            pickle.dump(topo_info, handle)
 
     def get_action_space(self):
-        '''
-        For this spatial representation type, there are six possible actions: forward, left, right, backward, left
-        rotation and right rotation
-        '''
+        # for this spatial representation type, there are three possible actions: forward, left, right
         return gym.spaces.Discrete(6)
 
     def clear_trajectories(self):
-        '''
-        Clear the trajectory history if needed
-        '''
+        # clear the trajectory history if needed
         self.trajectories = []
