@@ -9,8 +9,8 @@ The folder "experiments" contain the scripts for running the simulations and for
 ## Getting Started
 
 ### Installing
-
 * Install *Python==3.6*
+* Install the Cobel-RL package by following the instructions in https://github.com/sencheng/CoBeL-RL.
 * Install and configure *tensorflow-gpu==2.2.0*
 * Install other dependent packages: **pip install -r requirements.txt**
 * Add an extra python path: **export PYTHONPATH=/your_directory/EM_Spatial_Learning**
