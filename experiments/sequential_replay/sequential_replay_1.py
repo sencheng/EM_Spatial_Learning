@@ -133,15 +133,15 @@ def single_run(running_env, replay_type, num_replay, step_size=1.0, beta=1.0, ba
 
     ifanalyze = True
     if ifanalyze:
+    	data_folder = data_folder + '/beta_%s/%s+%s' % (beta, num_replay[0], num_replay[1])
+		if not os.path.exists(data_folder):
+			os.makedirs(data_folder)
         # store the trajectories in all training trials
-        data_path = data_folder + '/beta_%s/%s+%s/TrainingTrajs_%s_%s_%s.pickle' % (
-                    beta, num_replay[0], num_replay[1], replay_type, running_env, epoch)
+        data_path = data_folder + '/TrainingTrajs_%s_%s_%s.pickle' % (replay_type, running_env, epoch)
         with open(data_path, 'wb') as handle:
             pickle.dump(modules['spatial_representation'].trajectories, handle)
 
-        data_path = data_folder + '/beta_%s/%s+%s/ReplayBatches_%s_%s_%s.pickle' % (
-                    beta, num_replay[0], num_replay[1], replay_type, running_env, epoch)
-        # sequence_history = sequence_analyze(replayed_history, None)
+        data_path = data_folder + '/ReplayBatches_%s_%s_%s.pickle' % (replay_type, running_env, epoch)
         with open(data_path, 'wb') as handle:
             pickle.dump(replayed_history, handle)
 

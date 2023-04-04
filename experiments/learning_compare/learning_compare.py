@@ -156,15 +156,13 @@ def singleRun(agent, running_env, data_folder, params, epoch, step_size=1.0, ifs
 
     if ifstore:
         # we store the entire trajectory history of the agent
+        if not os.path.exists(data_folder):
+            os.makedirs(data_folder)
         data_dir = data_folder + '/TrainingTrajs_%s_%s_%s.pickle' % (agent, running_env, epoch)
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
         with open(data_dir, 'wb') as handle:
             pickle.dump(trajs_run, handle)
         # we also store the reward propagation information
         data_dir = data_folder + '/RewardPropa_%s_%s_%s.pickle' % (agent, running_env, epoch)
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
         with open(data_dir, 'wb') as handle:
             pickle.dump(reward_prop_run, handle)
 
@@ -186,6 +184,6 @@ epochs = 50
 
 data_folder = os.path.dirname(os.path.abspath(__file__)) + '/../../data/learning_compare'
 for running_env in envs:
-    for agent in agents:
+    for agent in agents[1:]:
         for epoch in range(epochs):
             singleRun(agent, running_env, data_folder, params, epoch, ifstore=True)

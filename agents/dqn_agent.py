@@ -8,7 +8,7 @@ from tensorflow.keras.layers import Dense, Flatten, Convolution2D
 from tensorflow.keras.optimizers import Adam
 from memory_modules.memories import NoMemory, SparseSequentialMemory
 # keras-rl imports
-from rl.agents import DQNAgent
+from agents.dqn import DQNAgent
 from rl.policy import EpsGreedyQPolicy, BoltzmannQPolicy
 from rl.memory import SequentialMemory
 from rl.core import Processor
