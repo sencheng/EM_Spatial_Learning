@@ -6,11 +6,10 @@ from tensorflow.keras import callbacks
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Flatten, Convolution2D
 from tensorflow.keras.optimizers import Adam
-from memory_modules.memories import NoMemory, SparseSequentialMemory
+from memory_modules.memories import NoMemory, SequentialMemory, SparseSequentialMemory
 # keras-rl imports
 from agents.dqn import DQNAgent
 from rl.policy import EpsGreedyQPolicy, BoltzmannQPolicy
-from rl.memory import SequentialMemory
 from rl.core import Processor
 
 class CustomProcessor(Processor):
