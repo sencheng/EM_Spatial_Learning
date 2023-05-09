@@ -19,7 +19,7 @@ mat.rc('font', **font)
 start_goal_nodes = {'TunnelMaze_LV1': [[1], [14]], 'TunnelMaze_LV2': [[6], [32]], 'TunnelMaze_LV3': [[21], [60]],
                     'TunnelMaze_LV4': [[42], [94]], 'TunnelMaze_New': [[44], [101]], 'TMaze': [[3], [11]]}
 
-project_folder = '/local/xzeng/phd_projects/em_function_replay'
+project_folder = os.path.dirname(os.path.abspath(__file__)) + '/../..'
 batch_size = 32
 
 def flat_data(data, N=5):

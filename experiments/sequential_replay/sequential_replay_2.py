@@ -48,7 +48,7 @@ def trialEndCallback(trial, rlAgent, logs):
         else:
             qt.QtWidgets.QApplication.instance().processEvents()
 
-data_folder = '/local/xzeng/phd_projects/em_function_replay/data/sequential_replay_1'
+data_folder = os.path.dirname(os.path.abspath(__file__)) + '/../../data/sequential_replay_1'
 def single_run(running_env, replay_type, num_replay, step_size=1.0, beta=1.0, batch_size=32, epoch=0):
     #### choose and load the environment
     start_goal_nodes = {'TunnelMaze_LV1': [[1], [14]], 'TunnelMaze_LV2': [[6], [32]], 'TunnelMaze_LV3': [[21], [60]],
@@ -148,7 +148,7 @@ def single_run(running_env, replay_type, num_replay, step_size=1.0, beta=1.0, ba
 if __name__ == "__main__":
     running_env = 'TunnelMaze_LV4'
     step_size = 1.0
-    betas = [0]
+    betas = [0, 0.0001, 0.001, 0.01, 0.1, 1, 2, 5, 10]
     epochs = range(50)
     for i in epochs:
         for beta in betas:
