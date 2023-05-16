@@ -15,6 +15,7 @@ The folder "experiments" contain the scripts for running the simulations and for
 * Install other dependent packages: **pip install -r requirements.txt**
 * Add an extra python path: **export PYTHONPATH=/your_directory/EM_Spatial_Learning**
 
+
 ### Executing program
 
 * Excute **EM_Spatial_Learning/experiments/learning_compare/learning_compare.py**, **EM_Spatial_Learning/experiments/sequential_replay/sequential_replay_1.py** and **EM_Spatial_Learning/experiments/sequential_replay/sequential_replay_2.py** for the simulations

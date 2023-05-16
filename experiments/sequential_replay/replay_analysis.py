@@ -91,8 +91,8 @@ def multiline(xs, ys, c, ax=None, **kwargs):
 start_goal_nodes = {'TunnelMaze_LV1': [[1], [14]], 'TunnelMaze_LV2': [[6], [32]], 'TunnelMaze_LV3': [[21], [60]],
                     'TunnelMaze_LV4': [[42], [94]]}
 
-data_folder = '/local/xzeng/phd_projects/em_function_replay/data/sequential_replay_3'
-project_folder = '/local/xzeng/phd_projects/em_function_replay'
+data_folder = os.path.dirname(os.path.abspath(__file__)) + '/../../data/sequential_replay_1'
+project_folder = os.path.dirname(os.path.abspath(__file__)) + '/../..'
 running_env = 'TunnelMaze_LV4'
 batch_size = 32
 

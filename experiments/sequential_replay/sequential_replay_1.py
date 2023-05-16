@@ -119,7 +119,7 @@ def single_run(running_env, replay_type, num_replay, step_size=1.0, beta=1.0, ba
     # and allow the topology class to access the rlAgent
     modules['spatial_representation'].rlAgent=rlAgent
     # start the training
-    rlAgent.train(numberOfTrials=500, maxNumberOfSteps=600)
+    rlAgent.train(numberOfTrials=5, maxNumberOfSteps=50)
     # end the training
     backend.clear_session()
     modules['world'].stopUnity()
@@ -133,15 +133,15 @@ def single_run(running_env, replay_type, num_replay, step_size=1.0, beta=1.0, ba
 
     ifanalyze = True
     if ifanalyze:
+        data_dir = data_folder + '/beta_%s/%s+%s' % (beta, num_replay[0], num_replay[1])
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
         # store the trajectories in all training trials
-        data_path = data_folder + '/beta_%s/%s+%s/TrainingTrajs_%s_%s_%s.pickle' % (
-                    beta, num_replay[0], num_replay[1], replay_type, running_env, epoch)
+        data_path = data_dir + '/TrainingTrajs_%s_%s_%s.pickle' % (replay_type, running_env, epoch)
         with open(data_path, 'wb') as handle:
             pickle.dump(modules['spatial_representation'].trajectories, handle)
 
-        data_path = data_folder + '/beta_%s/%s+%s/ReplayBatches_%s_%s_%s.pickle' % (
-                    beta, num_replay[0], num_replay[1], replay_type, running_env, epoch)
-        # sequence_history = sequence_analyze(replayed_history, None)
+        data_path = data_dir + '/ReplayBatches_%s_%s_%s.pickle' % (replay_type, running_env, epoch)
         with open(data_path, 'wb') as handle:
             pickle.dump(replayed_history, handle)
 

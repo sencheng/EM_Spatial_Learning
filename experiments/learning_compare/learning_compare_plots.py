@@ -20,9 +20,8 @@ agents = ['EC', 'DQN_original', 'DQN_online', 'DQN_sparse_replay', 'DQN_single_r
 names = ['EC', 'DQN', 'DQN_online', 'DQN_sparse_sampling', 'DQN_batch_size_1']
 agent_colors = ['green', 'orange', 'blue', 'yellow', 'black']
 # get the path of data storage
-data_folder = '/local/xzeng/phd_projects/em_function_replay/data/learning_compare'
-data_folder1 = '/local/xzeng/phd_projects/em_function_replay/data/sequential_replay_3/beta_2/100+0'
-project_folder = '/local/xzeng/phd_projects/em_function_replay'
+data_folder = os.path.dirname(os.path.abspath(__file__)) + '/../../data/learning_compare'
+project_folder = os.path.dirname(os.path.abspath(__file__)) + '/../..'
 epochs=range(50)
 def flat_data(data, N=3):
     flattened_data = []
@@ -33,7 +32,7 @@ def flat_data(data, N=3):
 ifdraw = True
 if ifdraw:
     test_steps = {}
-    for running_env in envs[3:]:
+    for running_env in envs:
         fig1, axs1=plt.subplots(figsize=(7.5, 6))
         # for EC and DQN online
         for agent, color, name in zip(agents[1:], agent_colors[1:], names[1:]):
@@ -69,48 +68,35 @@ if ifdraw:
     final_num_steps = []
     for key in list(test_steps.keys()):
         test_steps[key] = np.asarray(test_steps[key])
-    # test_steps['%s_%s'%('TunnelMaze_LV1', 'DQN_online')][np.where(test_steps['%s_%s'%('TunnelMaze_LV1', 'DQN_online')] == 601)[0]] = 12
-    # test_steps['%s_%s' % ('TunnelMaze_LV1', 'EC')][
-    #     np.where(test_steps['%s_%s' % ('TunnelMaze_LV1', 'EC')] == 601)[0]] = 12
-    # test_steps['%s_%s' % ('TunnelMaze_LV4', 'EC')][
-    #     np.where(test_steps['%s_%s' % ('TunnelMaze_LV4', 'EC')] == 601)[0]] = 20
-    # test_steps['%s_%s' % ('TunnelMaze_LV4', 'DQN_online')][[10, 14, 25]] =601
-    # test_steps['%s_%s' % ('TunnelMaze_LV1', 'DQN_online')][[10]] = 601
-    # for (agent, color) in zip(agents[:3], agent_colors[:3]):
-    #     final_num_steps.append([])
-    #     for running_env in envs:
-    #         final_num_steps[-1].append([])
-    #         for item in test_steps['%s_%s'%(running_env, agent)]:
-    #             final_num_steps[-1][-1].append(item)
-    #
-    # fig2, axs2 = plt.subplots(figsize=(14, 7))
-    # w = 0.15
-    # x = np.arange(1, len(envs)+1)
-    # linewidth = 2
-    # scatter_x = np.tile(x, (len(final_num_steps[0][0]),1))
-    # for (i, fns) in enumerate(final_num_steps):
-    #     label = agents[i]
-    #     if label == 'DQN_original': label = 'DQN'
-    #     axs2.bar(x+i*w, height=[np.mean(a) for a in fns], linewidth=linewidth,
-    #              yerr=[np.std(a)/np.sqrt(np.size(a)) for a in fns], color=(0,0,0,0),
-    #              width=w, edgecolor=agent_colors[i], align='center', capsize=12, label=label)
-    #     ## make the size of each dot proportional to the frequency of the data
-    #     # count the occurrences of each point
-    #     sizes=[]
-    #     for item in fns:
-    #         c = Counter(item)
-    #         # create a list of the sizes, here multiplied by 10 for scale
-    #         s = [c[(y)] for y in item]
-    #         sizes.append(s)
-    #     sizes = np.array(sizes)*10
-    #     axs2.scatter(scatter_x.T+i*w, fns, color='black', s=sizes)
-    # axs2.legend(fontsize=16)
-    # axs2.set_title('Asymptotic performance')
-    # axs2.set_ylabel('# time steps')
-    # axs2.set_xticks(x+i*w/2)
-    # axs2.set_ylim([0, 50])
-    # axs2.set_xticklabels(envs, fontsize=18)
-    # axs2.grid()
+
+    fig2, axs2 = plt.subplots(figsize=(14, 7))
+    w = 0.15
+    x = np.arange(1, len(envs)+1)
+    linewidth = 2
+    scatter_x = np.tile(x, (len(final_num_steps[0][0]),1))
+    for (i, fns) in enumerate(final_num_steps):
+        label = agents[i]
+        if label == 'DQN_original': label = 'DQN'
+        axs2.bar(x+i*w, height=[np.mean(a) for a in fns], linewidth=linewidth,
+                 yerr=[np.std(a)/np.sqrt(np.size(a)) for a in fns], color=(0,0,0,0),
+                 width=w, edgecolor=agent_colors[i], align='center', capsize=12, label=label)
+        ## make the size of each dot proportional to the frequency of the data
+        # count the occurrences of each point
+        sizes=[]
+        for item in fns:
+            c = Counter(item)
+            # create a list of the sizes, here multiplied by 10 for scale
+            s = [c[(y)] for y in item]
+            sizes.append(s)
+        sizes = np.array(sizes)*10
+        axs2.scatter(scatter_x.T+i*w, fns, color='black', s=sizes)
+    axs2.legend(fontsize=16)
+    axs2.set_title('Asymptotic performance')
+    axs2.set_ylabel('# time steps')
+    axs2.set_xticks(x+i*w/2)
+    axs2.set_ylim([0, 50])
+    axs2.set_xticklabels(envs, fontsize=18)
+    axs2.grid()
     plt.show()
 
 # function for drawing the env topology
@@ -205,7 +191,7 @@ if ifdraw1:
     plt.show()
 
 ##################### reward propagation ################################
-ifdraw2 = False
+ifdraw2 = True
 if ifdraw2:
     epochs = np.arange(0,50)
     num_reward_prop = 0
