@@ -184,6 +184,6 @@ epochs = 50
 
 data_folder = os.path.dirname(os.path.abspath(__file__)) + '/../../data/learning_compare'
 for running_env in envs:
-    for agent in agents[1:]:
+    for agent in agents:
         for epoch in range(epochs):
             singleRun(agent, running_env, data_folder, params, epoch, ifstore=True)

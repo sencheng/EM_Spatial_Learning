@@ -245,7 +245,7 @@ if __name__ == "__main__":
     # compute the relative performance during the training
     ifdraw4 = True
     if ifdraw4:
-        betas = [0, 0.01, 0.1, 0.5, 1, 2, 5, 10]
+        betas = [0, 0.0001, 0.001, 0.01, 0.1, 1, 2, 5, 10]
         num_replays = [10, 20, 50]
         colors = ['blue', 'yellow', 'red']
         markers = ['o', 'v', 's']

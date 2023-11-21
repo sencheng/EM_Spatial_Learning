@@ -35,7 +35,7 @@ if ifdraw:
     for running_env in envs:
         fig1, axs1=plt.subplots(figsize=(7.5, 6))
         # for EC and DQN online
-        for agent, color, name in zip(agents[1:], agent_colors[1:], names[1:]):
+        for agent, color, name in zip(agents, agent_colors, names):
             data_matrix = []
             test_steps['%s_%s' % (running_env, agent)] = []
             for epoch in epochs:
@@ -43,7 +43,7 @@ if ifdraw:
                 with open(data_path, 'rb') as handle:
                     data = pickle.load(handle)
                 training_trajs = data['training']
-                # test_steps['%s_%s' % (running_env, agent)].append(len(data['test']))
+                test_steps['%s_%s' % (running_env, agent)].append(len(data['test']))
                 num_steps = []
                 for item in training_trajs:
                     num_steps.append(len(item))
@@ -54,7 +54,6 @@ if ifdraw:
             trials = np.arange(1, len(mu) + 1)
             axs1.plot(mu, '-', label=name, color=color,linewidth=2.5)
             # axs1.fill_between(trials, mu+std, mu-std, alpha=0.3, color=color)
-
         axs1.legend(fontsize=16)
         axs1.set_xlim([-2, 550])
         axs1.set_ylim([-10, 600])
@@ -63,11 +62,13 @@ if ifdraw:
         axs1.set_ylabel('# of time steps', fontsize=20)
         axs1.set_xlabel('trials', fontsize=20)
         plt.tight_layout()
-
     # ################# average steps for the test trials ##################
     final_num_steps = []
-    for key in list(test_steps.keys()):
-        test_steps[key] = np.asarray(test_steps[key])
+    for agent in agents:
+        final_num_steps.append([])
+        for env in envs:
+            key = '%s_%s' % (running_env, agent)
+            final_num_steps[-1].append(np.array(test_steps[key]))
 
     fig2, axs2 = plt.subplots(figsize=(14, 7))
     w = 0.15

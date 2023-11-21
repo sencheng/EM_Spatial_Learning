@@ -108,7 +108,7 @@ obs_keys = list(world_info.keys())[:-3]
 ifdraw1 = False
 if ifdraw1:
     # parameters
-    betas = [2, 5]
+    betas = [0, 0.0001, 0.001, 0.01, 0.1, 1, 2, 5, 10]
     colors = ['gray', 'black']
     num_replays = [10, 20]
     epochs = range(50)
@@ -267,12 +267,12 @@ if ifdraw2:
 ifdraw3 = True
 if ifdraw3:
     # parameters
-    betas = [0, 1, 2, 5, 10]
+    betas = [0, 0.0001, 0.001, 0.01, 0.1, 1, 2, 5, 10]
     # colors = ['gray', 'black']
     colors = ['blue', 'yellow', 'red']
     patterns = ['o', 'v', 's']
     num_replays = [10, 20, 50]
-    epochs = range(2)
+    epochs = range(50)
     num_trial = 200
     # initialize the plot
     fig, axs = plt.subplots(figsize=(9, 8))
